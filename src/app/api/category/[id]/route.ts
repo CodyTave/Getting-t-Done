@@ -4,6 +4,7 @@ import ConnectDb from "@/database/db";
 import Category from "@/models/category";
 import { updateCategory } from "@/services/server";
 import { deleteImage } from "@/upload/lib";
+import Formation from "@/models/formation";
 
 export async function GET(
   req: NextRequest,
@@ -11,7 +12,13 @@ export async function GET(
 ) {
   await ConnectDb();
   const id = params.id;
+  const count = req.nextUrl.searchParams.get("count");
+
   try {
+    if (count?.toLowerCase() === "true") {
+      const formationsCount = await Formation.countDocuments({ category: id });
+      return new Response(JSON.stringify({ formationsCount }));
+    }
     const category = await Category.findById(id);
     if (!category) {
       return new Response(JSON.stringify({ message: "Category not found" }), {
@@ -74,8 +81,20 @@ export async function DELETE(
         status: 404,
       });
     }
+    const formationsCount = await Formation.countDocuments({ category: id });
+    if (formationsCount > 0) {
+      return new Response(
+        JSON.stringify({ message: "Category has formations" }),
+        {
+          status: 400,
+        }
+      );
+    }
     //@ts-ignore
-    await deleteImage(category.image);
+    if (category.image) {
+      //@ts-ignore
+      await deleteImage(category.image);
+    }
     await Category.findByIdAndDelete(id);
     return new Response(null, { status: 204 });
   } catch (error: any) {

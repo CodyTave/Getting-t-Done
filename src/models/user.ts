@@ -11,6 +11,6 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 );
-
+// delete mongoose.models.User;
 const User = mongoose.models.User || mongoose.model("User", userSchema);
 export default User;

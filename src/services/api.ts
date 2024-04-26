@@ -12,3 +12,10 @@ export async function uploadFiles(formData: FormData) {
 
   //    ^? UploadedFileResponse[]
 }
+export async function getCategories() {
+  const response = await fetch(process.env.API_BASE_URL + "/api/category", {
+    cache: "no-cache",
+  });
+  console.log("response", response);
+  return response;
+}

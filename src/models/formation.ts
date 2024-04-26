@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const programSchema = new Schema({
   title: { type: String, required: true },
-  parts: [{ type: String }], // Array of strings for parts
+  parts: [{ type: String }],
 });
 
 const formationSchema = new Schema(

@@ -4,16 +4,16 @@ import bcrypt from "bcrypt";
 import User from "@/models/user";
 
 export const POST = async (req: NextRequest) => {
-  const { name, email, password } = await req.json();
+  const { username, password } = await req.json();
   await connectDB();
   try {
-    if (!name || !email || !password) {
+    if (!username || !password) {
       return NextResponse.json({
         message: "Please fill all the fields",
         status: 400,
       });
     } else {
-      const existingUser = await User.findOne({ email: email });
+      const existingUser = await User.findOne({ username: username });
       if (existingUser) {
         return NextResponse.json({
           message: "User already exists",
@@ -22,8 +22,7 @@ export const POST = async (req: NextRequest) => {
       } else {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
-          name,
-          email,
+          username,
           password: hashedPassword,
         });
         if (user) {
