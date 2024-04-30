@@ -51,6 +51,29 @@ export async function updateCategory(formData: FormData, prevImage: string) {
 
 export async function createFormation(formData: FormData) {
   try {
+    const requiredFields = [
+      "title",
+      "description",
+      "objectifs",
+      "target",
+      "prerequisite",
+      "pedagogy",
+      "category",
+    ];
+    let validationErrors: string[] = [];
+
+    for (let field of requiredFields) {
+      const value = formData.get(field);
+      if (!value || value.toString().trim() === "") {
+        validationErrors.push(`${field}`);
+      }
+    }
+    if (validationErrors.length > 0) {
+      throw new Error(
+        `Les champs : ${validationErrors.join(", ")} sont obligatoires : `
+      );
+    }
+
     const formation: Record<string, string> = {};
     const entries = Array.from(formData.entries());
     for (const [key, value] of entries) {
@@ -69,7 +92,7 @@ export async function createFormation(formData: FormData) {
 
     return formation;
   } catch (error) {
-    throw new Error("Failed to create Formation: " + error);
+    throw new Error(error as string);
   }
 }
 export async function updateFormation(formData: FormData, prevImage: string) {

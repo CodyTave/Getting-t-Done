@@ -15,12 +15,16 @@ import {
   CameraIcon,
   ClockIcon,
   PaperAirplaneIcon,
+  TrashIcon,
 } from "@heroicons/react/20/solid";
 import { useFileInput } from "@/hooks/useFileInput";
 import MultilineInput from "@/Components/MultilineInput";
 import ProgramPart from "@/Components/ProgramPart";
+import { notFound, useRouter } from "next/navigation";
+import FormationSkel from "@/Skeletons/FormationSkel";
 
 export default function Formation({ params }: { params: { id: string } }) {
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { file, bind: bindFileInput, previewUrl } = useFileInput();
   const [categories, setCategories] = useState<any>([]);
@@ -35,6 +39,29 @@ export default function Formation({ params }: { params: { id: string } }) {
   const [program, setProgram] = useState<{ title: string; parts: string[] }[]>([
     { title: "", parts: [""] },
   ]);
+  const [Loaded, setLoaded] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/formation/${params.id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        setError("Échec de la suppression de cette formation");
+        throw new Error("Échec de la suppression de cette formation");
+      }
+      setDeleting(false);
+      router.push("/formations");
+    } catch (error) {
+      setError((error as any).message);
+      setDeleting(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
   const handleButtonClick = () => {
     fileInputRef.current?.click();
   };
@@ -73,6 +100,7 @@ export default function Formation({ params }: { params: { id: string } }) {
       }
     };
     fetchCategories();
+    fetchFormation();
   }, []);
   const addNewModule = () => {
     setProgram([...program, { title: "", parts: [""] }]);
@@ -80,230 +108,305 @@ export default function Formation({ params }: { params: { id: string } }) {
   const removeModule = (index: number) => {
     setProgram(program.filter((_, idx) => idx !== index));
   };
+  const fetchFormation = async () => {
+    try {
+      const resp = await fetch(`/api/formation/${params.id}`);
+      const data = await resp.json();
+      bindFileInput.display(data.image);
+      setSelectedCategory(data.category);
+      if (data.duration) {
+        const [number, suffix] = data.duration.split(" ");
+        setDurationSuffix(suffix);
+        setForm({ ...data, duration: Number(number) });
+      } else {
+        setForm({ ...data });
+      }
+      setObjectifs(data.objectifs.split("%99"));
+      setTarget(data.target.split("%99"));
+      setPrerequisite(data.prerequisite.split("%99"));
+      setPedagogy(data.pedagogy.split("%99"));
+      setProgram(data.program);
+      setLoaded(true);
+    } catch (error) {
+      console.log("error", error);
+      throw error;
+    }
+  };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("title", form.title);
-    formData.append("description", form.description);
-    formData.append("category", selectedCategory!);
-    formData.append("image", file!);
-    formData.append("duration", form.duration);
-    formData.append("price", form.price);
-    formData.append("objectifs", objectifs.join("%99"));
-    formData.append("target", target.join("%99"));
-    formData.append("prerequisite", prerequisite.join("%99"));
-    formData.append("pedagogy", pedagogy.join("%99"));
-    formData.append("program", JSON.stringify(program));
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("title", form.title);
+      formData.append("description", form.description);
+      formData.append("category", selectedCategory!);
+      if (file) {
+        formData.append("image", file);
+      }
+      if (form.duration) {
+        formData.append("duration", form.duration);
+      }
+      if (form.price) {
+        formData.append("price", form.price);
+      }
+      formData.append("objectifs", objectifs.join("%99"));
+      formData.append("target", target.join("%99"));
+      formData.append("prerequisite", prerequisite.join("%99"));
+      formData.append("pedagogy", pedagogy.join("%99"));
+      formData.append("program", JSON.stringify(program));
+      const response = await fetch(`/api/formation/${params.id}`, {
+        method: "PUT",
+        body: formData,
+        cache: "no-cache",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        setError(error.message);
+        throw new Error("Failed to create formation");
+      }
+      router.push("/formations");
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div>
-      <form className="space-y-8 grid" onSubmit={handleCreate}>
-        <div className="bg-gray-200 flex justify-center items-center rounded-full w-48 h-48 border-2">
-          {previewUrl ? (
-            <Image
-              fallbackSrc="/defaultImage.jpg"
-              as={NextImage}
-              sizes="100%"
-              width={0}
-              height={0}
-              className="w-48 h-48 object-cover rounded-full"
-              src={previewUrl}
-              alt="Preview"
-            />
-          ) : (
-            <p className="text-gray-400 ">No image</p>
-          )}
-        </div>
-        <Button
-          className="flex w-fit text-white/95"
-          onClick={handleButtonClick}
-          color="success"
-          endContent={<CameraIcon className="w-5 h-5" />}
-        >
-          Upload image
-        </Button>
-        <input
-          ref={fileInputRef}
-          style={{ display: "none" }}
-          onChange={bindFileInput.onChange}
-          type="file"
-          accept="image/*"
-        />
-        <div className="space-y-3">
-          <h2 className="text-sm text-gray-400">Informations de base</h2>
-          <div className="md:grid-cols-2 grid gap-5">
-            <Input
-              onChange={handleChange}
-              name="title"
-              variant="bordered"
-              autoFocus
-              label="Titre"
-              placeholder="Enter Formation title"
-              required
-            />
-            <Select
-              variant="bordered"
-              isLoading={fetchingCategories}
-              items={categories}
-              label="Selectionner une catégorie"
-              placeholder="Categorie de la formation"
-              selectionMode="single"
-              onChange={(e) => setSelectedCategory(e.target.value)}
-            >
-              {(item: any) => (
-                <SelectItem
-                  onChange={() => setSelectedCategory(item)}
-                  textValue={item.name}
-                  key={item._id}
-                  className="capitalize"
-                >
-                  <div className="flex gap-2 items-center">
-                    <Avatar
-                      alt={item.name}
-                      className="flex-shrink-0"
-                      size="sm"
-                      src={item.image}
-                    />
-                    <div className="flex flex-col">
-                      <span className="text-sm">{item.name}</span>
-                      <span className="text-xs text-gray-400 truncate line-clamp-1">
-                        {item.description}
-                      </span>
-                    </div>
-                  </div>
-                </SelectItem>
-              )}
-            </Select>
-            <Input
-              startContent={
-                <div className="pointer-events-none flex items-center">
-                  <span className="text-default-400 text-small">$</span>
-                </div>
-              }
-              onChange={handleChange}
-              name="price"
-              variant="bordered"
-              autoFocus
-              label="Prix (optionnel)"
-              placeholder="Saisir le prix de la formation"
-              type="number"
-            />
-            <Input
-              onChange={handleChange}
-              variant="bordered"
-              label="Durrée (optionnel)"
-              name="duration"
-              placeholder="0"
-              startContent={<ClockIcon className="w-5 h-5 text-gray-400" />}
-              endContent={
-                <div className="flex items-center">
-                  <label className="sr-only" htmlFor="duration">
-                    {"Durrée"}
-                  </label>
-                  <select
-                    onChange={(e) => setDurationSuffix(e.target.value)}
-                    className="outline-none border-0 bg-transparent text-default-400 text-small"
+      {Loaded ? (
+        <form className="space-y-8 grid" onSubmit={handleUpdate}>
+          <div
+            onClick={handleButtonClick}
+            className="bg-gray-200 flex justify-center items-center rounded-full w-48 h-48 border-2 hover:bg-gray-400/10 cursor-pointer"
+          >
+            {previewUrl ? (
+              <Image
+                fallbackSrc="/defaultImage.jpg"
+                as={NextImage}
+                sizes="100%"
+                width={0}
+                height={0}
+                className="w-48 h-48 object-cover rounded-full"
+                src={previewUrl}
+                alt="Preview"
+              />
+            ) : (
+              <p className="text-gray-400 ">No image</p>
+            )}
+          </div>
+          <Button
+            className="flex w-fit text-white/95"
+            onClick={handleButtonClick}
+            color="success"
+            endContent={<CameraIcon className="w-5 h-5" />}
+          >
+            Upload image
+          </Button>
+          <input
+            ref={fileInputRef}
+            style={{ display: "none" }}
+            onChange={bindFileInput.onChange}
+            type="file"
+            accept="image/*"
+          />
+          <div className="space-y-3">
+            <h2 className="text-sm text-gray-400">Informations de base</h2>
+            <div className="md:grid-cols-2 grid gap-5">
+              <Input
+                value={form.title}
+                onChange={handleChange}
+                name="title"
+                variant="bordered"
+                autoFocus
+                label="Titre"
+                placeholder="Enter Formation title"
+                required
+              />
+              <Select
+                variant="bordered"
+                isLoading={fetchingCategories}
+                items={categories}
+                label="Selectionner une catégorie"
+                placeholder="Categorie de la formation"
+                selectionMode="single"
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                selectedKeys={[selectedCategory!]}
+              >
+                {(item: any) => (
+                  <SelectItem
+                    onChange={() => setSelectedCategory(item)}
+                    textValue={item.name}
+                    key={item._id}
+                    className="capitalize"
                   >
-                    <option value="heures">{"Heures"}</option>
-                    <option value="jours">{"Jours"}</option>
-                    <option value="semaines">{"Semaines"}</option>
-                    <option value="mois">{"Mois"}</option>
-                  </select>
-                </div>
-              }
-              type="number"
-            />
-            <Textarea
-              onChange={handleChange}
-              name="description"
-              variant="bordered"
-              autoFocus
-              label="Description"
-              placeholder="Enter Formation title"
-              required
-            />
+                    <div className="flex gap-2 items-center">
+                      <Avatar
+                        alt={item.name}
+                        className="flex-shrink-0"
+                        size="sm"
+                        src={item.image}
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm">{item.name}</span>
+                        <span className="text-xs text-gray-400 truncate line-clamp-1">
+                          {item.description}
+                        </span>
+                      </div>
+                    </div>
+                  </SelectItem>
+                )}
+              </Select>
+              <Input
+                value={form.price}
+                startContent={
+                  <div className="pointer-events-none flex items-center">
+                    <span className="text-default-400 text-small">$</span>
+                  </div>
+                }
+                onChange={handleChange}
+                name="price"
+                variant="bordered"
+                autoFocus
+                label="Prix (optionnel)"
+                placeholder="Saisir le prix de la formation"
+                type="number"
+              />
+              <Input
+                value={form.duration}
+                onChange={handleChange}
+                variant="bordered"
+                label="Durrée (optionnel)"
+                name="duration"
+                placeholder="0"
+                startContent={<ClockIcon className="w-5 h-5 text-gray-400" />}
+                endContent={
+                  <div className="flex items-center">
+                    <label className="sr-only" htmlFor="duration">
+                      {"Durrée"}
+                    </label>
+                    <select
+                      value={durationSuffix}
+                      onChange={(e) => setDurationSuffix(e.target.value)}
+                      className="outline-none border-0 bg-transparent text-default-400 text-small"
+                    >
+                      <option value="heures">{"Heures"}</option>
+                      <option value="jours">{"Jours"}</option>
+                      <option value="semaines">{"Semaines"}</option>
+                      <option value="mois">{"Mois"}</option>
+                    </select>
+                  </div>
+                }
+                type="number"
+              />
+              <Textarea
+                value={form.description}
+                onChange={handleChange}
+                name="description"
+                variant="bordered"
+                autoFocus
+                label="Description"
+                placeholder="Enter Formation title"
+                required
+              />
+            </div>
           </div>
-        </div>
-        <div className="grid md:grid-cols-2 gap-5">
-          <div className="space-y-3">
-            <h2 className="text-sm text-gray-400">
-              {"Objectives de la formation"}
-            </h2>
-            <MultilineInput
-              valuesList={objectifs}
-              onChange={(values) => setObjectifs(values)}
-              label="Objectifs"
-              placeholder="Lister les objectifs de la formation"
-            />
+          <div className="grid md:grid-cols-2 gap-5">
+            <div className="space-y-3">
+              <h2 className="text-sm text-gray-400">
+                {"Objectives de la formation"}
+              </h2>
+              <MultilineInput
+                valuesList={objectifs}
+                onChange={(values) => setObjectifs(values)}
+                label="Objectifs"
+                placeholder="Lister les objectifs de la formation"
+              />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-sm text-gray-400">
+                {"Publique Vise de la formation"}
+              </h2>
+              <MultilineInput
+                valuesList={target}
+                onChange={(values) => setTarget(values)}
+                label="Publique Vise"
+                placeholder="Lister le publique vise de la formation"
+              />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-sm text-gray-400">
+                {"Prerequis de la formation"}
+              </h2>
+              <MultilineInput
+                valuesList={prerequisite}
+                onChange={(values) => setPrerequisite(values)}
+                label="Prerequis"
+                placeholder="Lister les prerequis de la formation"
+              />
+            </div>
+            <div className="space-y-3">
+              <h2 className="text-sm text-gray-400">
+                {"Modalites Pedagogiques de la formation"}
+              </h2>
+              <MultilineInput
+                valuesList={pedagogy}
+                onChange={(values) => setPedagogy(values)}
+                label="Modalites Pedagogiques"
+                placeholder="Lister les modalites pedagogiques de la formation"
+              />
+            </div>
           </div>
-          <div className="space-y-3">
-            <h2 className="text-sm text-gray-400">
-              {"Publique Vise de la formation"}
-            </h2>
-            <MultilineInput
-              valuesList={target}
-              onChange={(values) => setTarget(values)}
-              label="Publique Vise"
-              placeholder="Lister le publique vise de la formation"
-            />
+          <div className="space-y-3 grid">
+            <div className="flex justify-between">
+              <h2 className="text-sm text-gray-400">
+                {"Programme de la formation"}
+              </h2>
+              <Button
+                onClick={addNewModule}
+                className="text-white ml-auto"
+                color="success"
+              >
+                {"Ajouter un Module"}
+              </Button>
+            </div>
+            {program.map((item, index) => (
+              <ProgramPart
+                removeModule={() => removeModule(index)}
+                onTitleChange={(title) => handleTitleChange(index, title)}
+                onPartsChange={(parts) => handlePartsChange(index, parts)}
+                number={index + 1}
+                module={item}
+                key={index}
+              />
+            ))}
           </div>
-          <div className="space-y-3">
-            <h2 className="text-sm text-gray-400">
-              {"Prerequis de la formation"}
-            </h2>
-            <MultilineInput
-              valuesList={prerequisite}
-              onChange={(values) => setPrerequisite(values)}
-              label="Prerequis"
-              placeholder="Lister les prerequis de la formation"
-            />
-          </div>
-          <div className="space-y-3">
-            <h2 className="text-sm text-gray-400">
-              {"Modalites Pedagogiques de la formation"}
-            </h2>
-            <MultilineInput
-              valuesList={pedagogy}
-              onChange={(values) => setPedagogy(values)}
-              label="Modalites Pedagogiques"
-              placeholder="Lister les modalites pedagogiques de la formation"
-            />
-          </div>
-        </div>
-        <div className="space-y-3 grid">
-          <div className="flex justify-between">
-            <h2 className="text-sm text-gray-400">
-              {"Programme de la formation"}
-            </h2>
+          {error && <p className="text-red-0">{error}</p>}
+          <div className="flex justify-end gap-5">
             <Button
-              onClick={addNewModule}
-              className="text-white ml-auto"
-              color="success"
+              isLoading={deleting}
+              onClick={handleDelete}
+              endContent={<TrashIcon className="w-5 h-5 text-red-0" />}
+              variant="flat"
+              className="flex justify-start w-fit px-5 text-red-0 bg-red-0/10"
             >
-              {"Ajouter un Module"}
+              Supprimer
+            </Button>
+
+            <Button
+              isLoading={submitting}
+              endContent={<PaperAirplaneIcon className="w-5 h-5 text-white" />}
+              className=" px-16 bg-primary-0 text-white"
+              type="submit"
+            >
+              Sauveguarder
             </Button>
           </div>
-          {program.map((item, index) => (
-            <ProgramPart
-              removeModule={() => removeModule(index)}
-              onTitleChange={(title) => handleTitleChange(index, title)}
-              onPartsChange={(parts) => handlePartsChange(index, parts)}
-              number={index + 1}
-              module={item}
-              key={index}
-            />
-          ))}
-        </div>
-        <Button
-          endContent={<PaperAirplaneIcon className="w-5 h-5 text-white" />}
-          className="ml-auto px-16 bg-primary-0 text-white"
-          type="submit"
-        >
-          Sauveguarder
-        </Button>
-      </form>
+        </form>
+      ) : (
+        <FormationSkel />
+      )}
     </div>
   );
 }

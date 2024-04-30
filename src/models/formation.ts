@@ -17,7 +17,7 @@ const formationSchema = new Schema(
     target: { type: String, required: true },
     prerequisite: { type: String, required: true },
     pedagogy: { type: String, required: true },
-    duration: { type: String, required: true },
+    duration: { type: String, required: false },
     price: { type: Number, required: false },
     program: [programSchema],
     category: { type: Schema.Types.ObjectId, ref: "Category" }, // Reference to Category model

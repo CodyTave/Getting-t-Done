@@ -39,10 +39,14 @@ export async function DELETE(
   try {
     const formation = await Formation.findByIdAndDelete(id);
     if (!formation) {
-      return new Response(null, { status: 404 });
+      return new Response(JSON.stringify({ message: "Formation not found" }), {
+        status: 404,
+      });
     }
     return new Response(null, { status: 204 });
   } catch (error: any) {
+    console.log("error", error);
+
     return new Response(JSON.stringify({ message: error.message }), {
       status: 500,
     });

@@ -77,7 +77,6 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         throw new Error("Failed to create category");
       }
 
-      setSubmitting(false);
       onOpenChange();
       onSubmit();
       setName("");
