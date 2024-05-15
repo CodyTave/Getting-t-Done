@@ -95,7 +95,7 @@ export default function Login() {
             {isLoading ? "Logging In..." : "Login"}
           </button>
           <div className="text-center">
-            <span>Don't have an account yet? </span>
+            <span>{"Don't have an account yet?"} </span>
             <Link className="text-indigo-800 font-semibold" href="/singup">
               Sign Up
             </Link>
