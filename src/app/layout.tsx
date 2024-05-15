@@ -6,7 +6,7 @@ import LayoutContainer from "@/Components/LayoutContainer";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Meritel Buisness",
+  title: "Gettin't Done - Tasks Manager",
   icons: {
     icon: "/favicon.svg",
   },

@@ -1,3 +1,36 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.transall {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  transition-duration: 0.3s;
+}
+.transall:hover {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  transition-duration: 0.3s;
+}
+
+.brutal-shadow {
+  box-shadow: -3px 3px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow:hover {
+  box-shadow: -10px 15px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow-md {
+  box-shadow: -3px 3px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow-md:hover {
+  box-shadow: -6px 6px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow-sm {
+  box-shadow: 0px 0px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow-sm:hover {
+  box-shadow: -3px 3px 0px rgba(0, 0, 0, 1);
+}
+.brutal-shadow-input {
+  box-shadow: -2px 2px 0px rgba(0, 0, 0, 1);
+}

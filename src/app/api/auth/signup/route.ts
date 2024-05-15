@@ -15,10 +15,15 @@ export const POST = async (req: NextRequest) => {
     } else {
       const existingUser = await User.findOne({ username: username });
       if (existingUser) {
-        return NextResponse.json({
-          message: "User already exists",
-          status: 400,
-        });
+        return NextResponse.json(
+          {
+            message: "User already exists",
+            status: 409,
+          },
+          {
+            status: 409,
+          }
+        );
       } else {
         const hashedPassword = await bcrypt.hash(password, 10);
         const user = await User.create({
@@ -26,18 +31,28 @@ export const POST = async (req: NextRequest) => {
           password: hashedPassword,
         });
         if (user) {
-          return NextResponse.json({
-            status: 201,
-            message: "User created successfully",
-          });
+          return NextResponse.json(
+            {
+              status: 201,
+              message: "User created successfully",
+            },
+            {
+              status: 201,
+            }
+          );
         }
       }
     }
   } catch (error) {
     console.error(error);
-    return NextResponse.json({
-      status: 500,
-      message: "Server error",
-    });
+    return NextResponse.json(
+      {
+        status: 500,
+        message: "Server error",
+      },
+      {
+        status: 500,
+      }
+    );
   }
 };

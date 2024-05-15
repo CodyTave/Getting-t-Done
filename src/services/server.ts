@@ -1,121 +1,25 @@
-import { deleteImage, uploadImage } from "@/upload/lib";
-import { slugGenerator } from "@/utils/lib";
+import { Model } from "mongoose";
+import { NextRequest } from "next/server";
 
-export async function createCategory(formdata: FormData) {
-  const name = formdata.get("name");
-  const description = formdata.get("description");
-  const imageFile = formdata.get("image");
+export async function paginateModel<T>(
+  model: Model<T>,
+  req: NextRequest,
+  query: object = {}
+) {
+  const url = new URL(req.url);
+  const pageNumber = parseInt(url.searchParams.get("pageNumber") || "1");
+  const pageSize = parseInt(url.searchParams.get("pageSize") || "10");
+  const skip = (pageNumber - 1) * pageSize;
 
-  if (!name || !description) {
-    return Promise.reject(new Error("Missing required fields"));
-  }
-  try {
-    //@ts-ignore
-    if (imageFile) {
-      const image = await uploadImage(imageFile as File);
-      return {
-        name: name,
-        description: description,
-        image,
-      };
-    } else {
-      return {
-        name: name,
-        description: description,
-      };
-    }
-  } catch (error) {
-    throw new Error("Failed to upload image: " + error);
-  }
-}
+  const elements = await model.find(query).skip(skip).limit(pageSize);
+  const totalCount = await model.countDocuments(query);
+  const totalPages = Math.ceil(totalCount / pageSize);
 
-export async function updateCategory(formData: FormData, prevImage: string) {
-  try {
-    const newCategory: Record<string, string> = {};
-    const entries = Array.from(formData.entries());
-    for (const [key, value] of entries) {
-      if (key === "image") {
-        await deleteImage(prevImage);
-        const newImage = await uploadImage(value as File);
-        newCategory[key] = newImage!;
-      } else {
-        newCategory[key] = value!.toString();
-      }
-    }
-
-    return newCategory;
-  } catch (error) {
-    throw new Error("Failed to Update Category: " + error);
-  }
-}
-
-export async function createFormation(formData: FormData) {
-  try {
-    const requiredFields = [
-      "title",
-      "description",
-      "objectifs",
-      "target",
-      "prerequisite",
-      "pedagogy",
-      "category",
-    ];
-    let validationErrors: string[] = [];
-
-    for (let field of requiredFields) {
-      const value = formData.get(field);
-      if (!value || value.toString().trim() === "") {
-        validationErrors.push(`${field}`);
-      }
-    }
-    if (validationErrors.length > 0) {
-      throw new Error(
-        `Les champs : ${validationErrors.join(", ")} sont obligatoires : `
-      );
-    }
-
-    const formation: Record<string, string> = {};
-    const entries = Array.from(formData.entries());
-    for (const [key, value] of entries) {
-      if (key === "image") {
-        const imageUrl = await uploadImage(value as File);
-        formation[key] = imageUrl!;
-      } else if (key === "program") {
-        formation[key] = JSON.parse(value.toString());
-      } else {
-        formation[key] = value.toString();
-        if (key === "title") {
-          formation["slug"] = slugGenerator(value.toString());
-        }
-      }
-    }
-
-    return formation;
-  } catch (error) {
-    throw new Error(error as string);
-  }
-}
-export async function updateFormation(formData: FormData, prevImage: string) {
-  try {
-    const updatedFormation: Record<string, any> = {};
-    const entries = Array.from(formData.entries());
-    for (const [key, value] of entries) {
-      if (key === "image" && value instanceof File) {
-        await deleteImage(prevImage);
-        const newImage = await uploadImage(value);
-        updatedFormation[key] = newImage;
-      } else if (key === "program") {
-        updatedFormation[key] = JSON.parse(value.toString());
-      } else {
-        updatedFormation[key] = value.toString();
-        if (key === "title") {
-          updatedFormation["slug"] = slugGenerator(value.toString()); // Update slug based on new title
-        }
-      }
-    }
-
-    return updatedFormation;
-  } catch (error) {
-    throw new Error("Failed to Update Formation: " + error);
-  }
+  return {
+    totalPages: totalPages,
+    currentPage: pageNumber,
+    pageSize: pageSize,
+    totalCount: totalCount,
+    elements: elements,
+  };
 }
