@@ -49,6 +49,7 @@ export default function Page() {
       <div className="flex justify-between items-center mt-6 md:mt-0">
         <Link href="/">
           <Image
+            priority
             className="w-20"
             src="/logo.png"
             alt="logo"

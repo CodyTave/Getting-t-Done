@@ -49,6 +49,7 @@ export default function Login() {
     <main className="w-full h-screen grid lg:grid-cols-2 justify-items-center items-center ">
       <div className="bg-orange-500/20 w-full h-full flex justify-center items-center">
         <Image
+          priority
           className="w-28 mx-auto"
           src="/logo.png"
           alt="logo"
