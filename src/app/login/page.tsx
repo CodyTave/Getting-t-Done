@@ -51,7 +51,7 @@ export default function Login() {
         <Image
           priority
           className="w-28 mx-auto"
-          src="/logo.png"
+          src="/Logo.png"
           alt="logo"
           sizes="100%"
           width={0}

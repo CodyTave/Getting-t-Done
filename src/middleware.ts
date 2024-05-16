@@ -20,24 +20,29 @@ function handleAuthentication(request: NextRequest) {
 }
 
 export async function middleware(request: NextRequest) {
-  // const { pathname } = request.nextUrl;
-  // // const excludedPaths = ["/api/auth/login"];
-  // const assetPattern = /^\/(_next\/static|static|public)\//;
-  // if (
-  //   assetPattern.test(pathname) ||
-  //   // excludedPaths.includes(pathname) ||
-  //   pathname.startsWith("/api/")
-  // ) {
-  //   return NextResponse.next();
-  // }
-  // const isAuthenticated = handleAuthentication(request);
-  // if (pathname === "/login" || pathname === "/singup") {
-  //   return isAuthenticated
-  //     ? NextResponse.redirect(new URL("/", request.url))
-  //     : NextResponse.next();
-  // }
-  // if (!isAuthenticated) {
-  //   return NextResponse.redirect(new URL("/login", request.url));
-  // }
-  // return NextResponse.next();
+  const { pathname } = request.nextUrl;
+  // const excludedPaths = ["/api/auth/login"];
+  const assetPattern = /^\/(_next\/static|static|public)\//;
+
+  if (
+    assetPattern.test(pathname) ||
+    // excludedPaths.includes(pathname) ||
+    pathname.startsWith("/api/")
+  ) {
+    return NextResponse.next();
+  }
+
+  const isAuthenticated = handleAuthentication(request);
+
+  if (pathname === "/login" || pathname === "/singup") {
+    return isAuthenticated
+      ? NextResponse.redirect(new URL("/", request.url))
+      : NextResponse.next();
+  }
+
+  if (!isAuthenticated) {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
+  return NextResponse.next();
 }

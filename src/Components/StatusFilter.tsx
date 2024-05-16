@@ -21,7 +21,7 @@ export default function StatusFilter({
       value={status!}
       placeholder="Status"
       classNames={{
-        mainWrapper: "brutal-shadow-sm transall",
+        mainWrapper: "brutal-shadow-sm transall w-40",
       }}
       radius="none"
       className="w-40"

@@ -51,7 +51,7 @@ export default function Page() {
           <Image
             priority
             className="w-20"
-            src="/logo.png"
+            src="/Logo.png"
             alt="logo"
             sizes="100%"
             width={0}
