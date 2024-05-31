@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { logo } from "@/assets";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -49,7 +48,14 @@ export default function Login() {
   return (
     <main className="w-full h-screen grid lg:grid-cols-2 justify-items-center items-center ">
       <div className="bg-orange-500/20 w-full h-full flex justify-center items-center">
-        <Image className="w-28 mx-auto" src={logo} alt="logo" />
+        <Image
+          className="w-28 mx-auto"
+          src="/Logo.png"
+          alt="logo"
+          sizes="100%"
+          width={0}
+          height={0}
+        />
       </div>
 
       <div className="max-w-sm w-full text-gray-600">

@@ -3,11 +3,8 @@ import StatusFilter from "@/Components/StatusFilter";
 import TaskCard from "@/Components/TaskCard";
 import TaskModal from "@/Components/TaskModal";
 import UserProfile from "@/Components/UserProfile";
-import {
-  useFilterContext,
-  useModalContext,
-  useUserContext,
-} from "@/context/store";
+import { logo } from "@/assets";
+import { useFilterContext, useModalContext } from "@/context/store";
 import { getAuthHeader } from "@/services/auth";
 import { BeakerIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button, Skeleton } from "@nextui-org/react";
@@ -48,17 +45,9 @@ export default function Page() {
     <div className="p-5 space-y-5">
       <div className="flex justify-between items-center mt-6 md:mt-0">
         <Link href="/">
-          <Image
-            priority
-            className="w-20"
-            src="/Logo.png"
-            alt="logo"
-            sizes="100%"
-            width={0}
-            height={0}
-          />
+          <Image priority className="w-20" src={logo} alt="logo" />
           <p className="text-xs text-default-500 mt-2">
-            A new way to handle your business
+            Simplest way to handle your business
           </p>
         </Link>
         <div>
